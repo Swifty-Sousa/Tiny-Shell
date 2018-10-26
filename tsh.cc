@@ -1,7 +1,10 @@
 // 
 // tsh - A tiny shell program with job control
-// 
-// Christian F. Sousa
+// source code provided by the University of Colorado Boulder
+// Department of Computer Science
+// Edited by
+// Andrea Chamorro BS - Computer Science
+// Christian F. Sousa BS - Computer Science , Bs - Mechanical Engineering
 //
 
 using namespace std;
