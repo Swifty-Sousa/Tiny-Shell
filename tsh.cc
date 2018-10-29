@@ -68,10 +68,6 @@ int main(int argc, char **argv)
   while ((c = getopt(argc, argv, "hvp")) != EOF) {
     switch (c) {
     case 'h':             // print help message
-      cout<<"Usage: shell [-hvp]"<< endl;
-      cout<<"-h  print this messege"<< endl;
-      cout<<"-v  print additional diognistic information"<< endl;
-      cout<<"-p  do no emmit a command promp"<< endl;
       usage();
       break;
     case 'v':             // emit additional diagnostic info
