@@ -4,7 +4,7 @@
 // Department of Computer Science
 // Edited by
 // Andrea Chamorro BS - Computer Science
-// Christian F. Sousa BS - Computer Science , Bs - Mechanical Engineering
+// Christian F. Sousa BS - Computer Science , BS - Mechanical Engineering
 //
 
 using namespace std;
@@ -28,13 +28,26 @@ using namespace std;
 //
 // Needed global variable definitions
 //
-
+#define BLTN_UNK 0//for things that are not built in commands.
+#define BLTN_EX 1// for exit
+#define BLTN_KA 2//for kill all
+#define BLTN_JOBS 3// for jobs
+#define BLTN_BGFG 4//for do_bgfg
+#define BLTN_IGNR //for ignore
+#define MAXARGS 128 // maximum number of arguments
+#define MAXLINE 1024 // maximum number of lines
 static char prompt[] = "tsh> ";
 int verbose = 0;
 
 //
-// You need to implement the functions eval, builtin_cmd, do_bgfg,
-// waitfg, sigchld_handler, sigstp_handler, sigint_handler
+// You need to implement the functions                                              Complete/Incomplete
+//eval                                                                                      
+//builtin_cmd
+//do_bgfg
+//waitfg
+//sigchld_handler
+//sigstp_handler
+//sigint_handler
 //
 // The code below provides the "prototypes" for those functions
 // so that earlier code can refer to them. You need to fill in the
@@ -45,7 +58,6 @@ void eval(char *cmdline);
 int builtin_cmd(char **argv);
 void do_bgfg(char **argv);
 void waitfg(pid_t pid);
-
 void sigchld_handler(int sig);
 void sigtstp_handler(int sig);
 void sigint_handler(int sig);
@@ -160,14 +172,20 @@ void eval(char *cmdline)
   // use below to launch a process.
   //
   char *argv[MAXARGS];
-
+  char cmdholder[MAXLINE];
+  strcpy(cmdholder, cmdline); // copy command line into holder;
+  pid_t pid; // this is a process id
   //
   // The 'bg' variable is TRUE if the job should run
   // in background mode or FALSE if it should run in FG
   //
   int bg = parseline(cmdline, argv); 
-  if (argv[0] == NULL)  
-    return;   /* ignore empty lines */
+    if (argv[0] == NULL)  
+        return;   /* ignore empty lines */
+    if (!builtin_cmd(argv))
+    {
+        // do the things if its not built in, for now ill work on the built ins.
+    }
 
   return;
 }
@@ -182,7 +200,17 @@ void eval(char *cmdline)
 //
 int builtin_cmd(char **argv) 
 {
-  string cmd(argv[0]);
+  //string cmd(argv[0]);
+  // im just gonna use string compare because I do no know what this does
+  if(!strcmp(argv[0], "quit"))
+  {
+      exit(0);
+      
+  }
+  if(!strcmp(argv[0], "")
+  {
+
+  }
   return 0;     /* not a builtin command */
 }
 
@@ -248,7 +276,6 @@ void waitfg(pid_t pid)
 // Signal handlers
 //
 
-
 /////////////////////////////////////////////////////////////////////////////
 //
 // sigchld_handler - The kernel sends a SIGCHLD to the shell whenever
@@ -266,7 +293,7 @@ void sigchld_handler(int sig)
 //
 // sigint_handler - The kernel sends a SIGINT to the shell whenver the
 //    user types ctrl-c at the keyboard.  Catch it and send it along
-//    to the foreground job.  
+//    to the foreground job.
 //
 void sigint_handler(int sig) 
 {
