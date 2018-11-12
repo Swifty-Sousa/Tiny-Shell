@@ -28,6 +28,9 @@ using namespace std;
 //
 // Needed global variable definitions
 //
+
+
+//builtin fuctions
 #define BLTN_EX 1// for exit
 #define BLTN_KA 2//for kill all
 #define BLTN_JOBS 3// for jobs
@@ -35,6 +38,16 @@ using namespace std;
 #define BLTN_IGNR //for ignore
 #define MAXARGS 128 // maximum number of arguments
 #define MAXLINE 1024 // maximum number of lines
+
+// job states
+#define UNDEF 0
+#define FG 1
+#define BG 2
+#define ST 3 // stopped 
+
+
+
+
 static char prompt[] = "tsh> ";
 int verbose = 0;
 void do_exit();
@@ -45,14 +58,18 @@ void showjobs(struct job_t *jobs);
 //
 // You need to implement the functions                                              Complete/Incomplete
 //eval                                                                                    started  
-//builtin_cmd                                                                             started
+//builtin_cmd                                                                             COMPLETED
 //do_bgfg
+//do exit
+//do jobs
+//do killall
+//showjobs
 //waitfg
 //sigchld_handler
 //sigstp_handler
 //sigint_handler
 //
-//built in commands
+//
 // jobs struct
 
 
@@ -191,7 +208,27 @@ void eval(char *cmdline)
         return;   /* ignore empty lines */
     if (!builtin_cmd(argv))
     {
-        // do the things if its not built in, for now ill work on the built ins.
+      int state;
+      if((pid=fork())==0)
+      {
+        //cout<< "this will be a child process"<<endl;
+        // some stuff about the child running the process
+        if(execve(argv[0],argv,environ)<0)
+        {
+          cout << "you got an error dog"<< endl;
+          exit(0); // exit the invalid command
+        }
+      }
+        if(bg)
+        {
+          // backgroud processece 
+        }
+        else
+        {
+          state = FG;
+          addjob(jobs, pid,state, cmdholder);
+          //forground process
+        }
     }
 
   return;
@@ -220,7 +257,6 @@ int builtin_cmd(char **argv)
     //cout<< "reached fg"<< endl;
     do_bgfg(argv);
     return BLTN_BGFG; 
-    cout<< "reached fg"<< endl;
   }
   if(!strcmp(argv[0], "bg"))
   {
@@ -239,7 +275,6 @@ int builtin_cmd(char **argv)
   {
     //cout<< "reached jobs"<< endl;
     do_show_jobs();
-    cout << "reached bg"<< endl;
   }
   return 0;     /* not a builtin command */
 }
@@ -260,7 +295,7 @@ void do_show_jobs(void)
 
 void showjobs(struct job_t *jobs)
 {
-    
+    cout<< "show jobs not yet implemented"<< endl;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -363,6 +398,7 @@ void sigtstp_handler(int sig)
 /*********************
  * End signal handlers
  *********************/
+
 
 
 
