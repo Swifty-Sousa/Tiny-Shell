@@ -207,10 +207,29 @@ int builtin_cmd(char **argv)
       exit(0);
       
   }
-  if(!strcmp(argv[0], "")
+  if(!strcmp(argv[0], "fg"))
   {
-
+    // some do bfgb
+    cout<< "reached fg"<< endl;
   }
+  if(!strcmp(argv[0], "bg"))
+  {
+    // some do bfgb
+    cout << "reached bg"<< endl;
+  }
+  if(!strcmp(argv[0], "killall"))
+  {
+    // do the kill all fuciton
+    cout<< "reached killall"<< endl;
+  }
+  if(!strcmp(argv[0], "jobs"))
+  {
+    cout<< "reached jobs"<< endl;
+  }
+  
+  
+  
+
   return 0;     /* not a builtin command */
 }
 
