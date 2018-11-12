@@ -28,7 +28,6 @@ using namespace std;
 //
 // Needed global variable definitions
 //
-#define BLTN_UNK 0//for things that are not built in commands.
 #define BLTN_EX 1// for exit
 #define BLTN_KA 2//for kill all
 #define BLTN_JOBS 3// for jobs
@@ -38,17 +37,25 @@ using namespace std;
 #define MAXLINE 1024 // maximum number of lines
 static char prompt[] = "tsh> ";
 int verbose = 0;
+void do_exit();
+void do_killall(char **argv);
+void do_show_jobs();
+void showjobs(struct job_t *jobs);
 
 //
 // You need to implement the functions                                              Complete/Incomplete
-//eval                                                                                      
-//builtin_cmd
+//eval                                                                                    started  
+//builtin_cmd                                                                             started
 //do_bgfg
 //waitfg
 //sigchld_handler
 //sigstp_handler
 //sigint_handler
 //
+//built in commands
+// jobs struct
+
+
 // The code below provides the "prototypes" for those functions
 // so that earlier code can refer to them. You need to fill in the
 // function bodies below.
@@ -204,33 +211,56 @@ int builtin_cmd(char **argv)
   // im just gonna use string compare because I do no know what this does
   if(!strcmp(argv[0], "quit"))
   {
-      exit(0);
-      
+      do_exit();
+      return BLTN_EX; 
   }
   if(!strcmp(argv[0], "fg"))
   {
     // some do bfgb
+    //cout<< "reached fg"<< endl;
+    do_bgfg(argv);
+    return BLTN_BGFG; 
     cout<< "reached fg"<< endl;
   }
   if(!strcmp(argv[0], "bg"))
   {
     // some do bfgb
-    cout << "reached bg"<< endl;
+    //cout << "reached bg"<< endl;
+    do_bgfg(argv);
+    return BLTN_BGFG;
   }
   if(!strcmp(argv[0], "killall"))
   {
     // do the kill all fuciton
-    cout<< "reached killall"<< endl;
+    //cout<< "reached killall"<< endl;
+    do_killall(argv);
   }
   if(!strcmp(argv[0], "jobs"))
   {
-    cout<< "reached jobs"<< endl;
+    //cout<< "reached jobs"<< endl;
+    do_show_jobs();
+    cout << "reached bg"<< endl;
   }
-  
-  
-  
-
   return 0;     /* not a builtin command */
+}
+void do_exit(void)
+{
+  exit(0);
+}
+
+void do_killall(char **argv)
+{
+
+}
+// show all the jobs
+void do_show_jobs(void)
+{
+    showjobs(jobs);
+}
+
+void showjobs(struct job_t *jobs)
+{
+    
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -333,6 +363,7 @@ void sigtstp_handler(int sig)
 /*********************
  * End signal handlers
  *********************/
+
 
 
 
