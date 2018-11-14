@@ -53,7 +53,6 @@ int nextjid = 1;
 static char prompt[] = "tsh> ";
 int verbose = 0;
 void do_exit();
-void do_killall(char **argv);
 void do_show_jobs();
 void showjobs(struct job_t *jobs);
 struct job_t *findprocessid(struct job_t *jobs,pid_t pid);
@@ -66,7 +65,7 @@ void fgpid(struct job_t jobs);
 //do_bgfg
 //do exit                                                                                 Completed
 //do jobs
-//do killall
+
 //showjobs
 //waitfg
 //sigchld_handler
@@ -229,7 +228,7 @@ void eval(char *cmdline)
         setpgid(0, 0); // because hint section of lab handout
         if(execve(argv[0],argv,environ)<0)
         {
-          cout<< argv[0]<< " : Commamnd not found"<< endl;
+          cout<< argv[0]<< ": Commamnd not found"<< endl;
           exit(0); // exit the invalid command
             return;
         }
@@ -287,13 +286,6 @@ int builtin_cmd(char **argv)
     do_bgfg(argv);
     return BLTN_BGFG;
   }
-  if(!strcmp(argv[0], "killall"))
-  {
-    // do the kill all fuciton
-    //cout<< "reached killall"<< endl;
-    do_killall(argv);
-    return 1;
-  }
   if(!strcmp(argv[0], "jobs"))
   {
     //cout<< "reached jobs"<< endl;
@@ -307,10 +299,6 @@ void do_exit(void)
   exit(0);
 }
 
-void do_killall(char **argv)
-{
-
-}
 // show all the jobs
 void do_show_jobs(void)
 {
