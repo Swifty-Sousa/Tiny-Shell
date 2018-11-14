@@ -38,6 +38,7 @@ using namespace std;
 #define BLTN_IGNR //for ignore
 #define MAXARGS 128 // maximum number of arguments
 #define MAXLINE 1024 // maximum number of lines
+#define MAXJOBS 16
 
 // job states
 #define UNDEF 0
@@ -54,13 +55,15 @@ void do_exit();
 void do_killall(char **argv);
 void do_show_jobs();
 void showjobs(struct job_t *jobs);
+struct job_t *findprocessid(struct job_t *jobs,pid_t pid);
+void fgpid(struct job_t jobs);
 
 //
 // You need to implement the functions                                              Complete/Incomplete
 //eval                                                                                    started  
 //builtin_cmd                                                                             COMPLETED
 //do_bgfg
-//do exit
+//do exit                                                                                 Completed
 //do jobs
 //do killall
 //showjobs
@@ -203,33 +206,48 @@ void eval(char *cmdline)
   // The 'bg' variable is TRUE if the job should run
   // in background mode or FALSE if it should run in FG
   //
-  int bg = parseline(cmdline, argv); 
+  int bg = parseline(cmdholder, argv); 
     if (argv[0] == NULL)  
         return;   /* ignore empty lines */
     if (!builtin_cmd(argv))
     {
       int state;
+      sigset_t mask;
+      sigemptyset(&mask);
+      sigaddset(&mask, SIGCHLD);
+      sigprocmask(SIG_BLOCK, &mask, NULL);
       if((pid=fork())==0)
       {
         //cout<< "this will be a child process"<<endl;
         // some stuff about the child running the process
+        sigprocmask(SIG_UNBLOCK, &mask, NULL);	// unblock SIGCHLD for child
+        setpgid(0, 0); // because hint section of lab handout
         if(execve(argv[0],argv,environ)<0)
         {
-          cout << "you got an error dog"<< endl;
+          cout << "Command not found " << argv[0] << endl;
           exit(0); // exit the invalid command
+            return;
         }
       }
-        if(bg)
+        if(!bg)// forground processece 
         {
-          // backgroud processece 
+          state =FG;
+          addjob(jobs, pid, state,cmdline);
+          sigprocmask(SIG_UNBLOCK, &mask, NULL);
+          //cout<< "this is a forground process"<< endl;
+          waitfg(pid);
         }
-        else
+        else// backgournd process
         {
-          state = FG;
-          addjob(jobs, pid,state, cmdholder);
-          //forground process
+          //cout << "this is a background process"<< endl;
+          int jid;
+          state= BG;
+          addjob(jobs, pid, state,cmdline);
+          sigprocmask(SIG_UNBLOCK, &mask, NULL);
+          jid = pid2jid(pid);
+          printf("[%d] (%d) %s", jid, pid, cmdholder);
         }
-    }
+     }
 
   return;
 }
@@ -352,7 +370,30 @@ void do_bgfg(char **argv)
 //
 void waitfg(pid_t pid)
 {
-  return;
+  if(pid==0 || findprocessid(jobs,pid)==NULL)
+  {
+    //if we get here then the pid does not correspond to a current process
+    return;
+  }
+  while(pid==fgpid(jobs))
+  {
+    cout<< "pid: "<< pid<< " compared to : "<< fgpid(jobs)<<endl;
+    sleep(1);
+    //wait 1 sec while the process is in the forground
+  }
+}
+//find if a process if currently running
+struct job_t *findprocessid(struct job_t *jobs,pid_t pid)
+{
+  if(pid<1)
+    return NULL;
+  
+  for(int i=0; i<MAXJOBS; i++)
+  {
+    if(jobs[i].pid==pid)
+      return &jobs[i];
+  }
+  return NULL;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -370,6 +411,7 @@ void waitfg(pid_t pid)
 //
 void sigchld_handler(int sig) 
 {
+    cout<< "this is a test"<< endl;
   return;
 }
 
@@ -397,10 +439,4 @@ void sigtstp_handler(int sig)
 
 /*********************
  * End signal handlers
- *********************/
-
-
-
-
-
-
+ *********************/// 
