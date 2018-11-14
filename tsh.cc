@@ -46,7 +46,8 @@ using namespace std;
 #define BG 2
 #define ST 3 // stopped 
 
-
+//Variables
+int nextjid = 1;
 
 
 static char prompt[] = "tsh> ";
@@ -88,6 +89,9 @@ void waitfg(pid_t pid);
 void sigchld_handler(int sig);
 void sigtstp_handler(int sig);
 void sigint_handler(int sig);
+
+//
+
 
 //
 // main - The shell's main routine 
@@ -252,7 +256,6 @@ void eval(char *cmdline)
   return;
 }
 
-/////////////////////////////////////////////////////////////////////////////
 //
 // builtin_cmd - If the user has typed a built-in command then execute
 // it immediately. The command name would be in argv[0] and
@@ -409,10 +412,32 @@ struct job_t *findprocessid(struct job_t *jobs,pid_t pid)
 //     available zombie children, but doesn't wait for any other
 //     currently running children to terminate.  
 //
-void sigchld_handler(int sig) 
+void sigchld_handler(int sig) //we want to wait until child is done executed
 {
     cout<< "this is a test"<< endl;
-  return;
+    pid_t pid;
+    int status;
+    //WNOHANG wait for the child whose process id is equal to the value of pid
+    //WUNTRACED the status of child processes under pid that are stopped
+    while ((pid = waitpid(WAIT_ANY, &status, WNOHANG | WUNTRACED)) > 0)
+    { //lets child processes end before reapping them
+        //WUNTRACED	is for non terminated processes (stopped processes)
+		if(WIFSTOPPED(status)){ // change the state to stopped beacuse status stopped
+            struct job_t *job = getjobpid(jobs, pid);
+  			job->state = ST;
+			printf("Job [%d] (%d) stopped by signal 20\n", job->jid, pid);
+			return;
+		}
+		else if(WIFSIGNALED(status)){ //if ctrl-c
+            struct job_t *job = getjobpid(jobs, pid); 
+			printf("Job [%d] (%d) terminated by signal 2\n", job->jid, pid);
+			deletejob(jobs, pid);
+		}
+		else{		
+ 			deletejob(jobs, pid);
+ 			}
+ 		}		
+	return; 
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -440,3 +465,4 @@ void sigtstp_handler(int sig)
 /*********************
  * End signal handlers
  *********************/// 
+
