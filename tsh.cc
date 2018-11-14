@@ -181,21 +181,6 @@ int main(int argc, char **argv)
   exit(0); //control never reaches here
 }
     
-    
-/*
-void eval(char *cmdline){
-    char *arg[MAXARGS];
-    int bg = parseline(cmdline, argv);
-    if (!builtin_cmd(arg)){
-        if (fork() == 0) {
-            //in child
-            execvp(argv[0], argv);
-            printf("%s; Command not found\n", argv[0]);
-            exit(0);
-        }
-    }
-    return;
-}*/
   
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -244,7 +229,7 @@ void eval(char *cmdline)
         setpgid(0, 0); // because hint section of lab handout
         if(execve(argv[0],argv,environ)<0)
         {
-          //cout << "Command not found " << argv[0] << endl;
+          cout << "Command not found " << argv[0] << endl;
           exit(0); // exit the invalid command
             return;
         }
@@ -383,6 +368,7 @@ void do_bgfg(char **argv)
   //
   string cmd(argv[0]);
   
+  //TRACE09, TRACE10, TRACE11
   if((strcmp(argv[0],"bg")) == 0)  {
   	jobp->state = BG; //change state to bg
   	kill(-jobp->pid, SIGCONT); //run the job again
