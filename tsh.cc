@@ -382,7 +382,17 @@ void do_bgfg(char **argv)
   // your benefit.
   //
   string cmd(argv[0]);
-
+  
+  if((strcmp(argv[0],"bg")) == 0)  {
+  	jobp->state = BG; //change state to bg
+  	kill(-jobp->pid, SIGCONT); //run the job again
+  	printf("[%d] (%d) %s", jobp->jid, jobp->pid, jobp->cmdline);
+  }
+  if((strcmp(argv[0],"fg")) == 0)  {
+  	jobp->state = FG; //change state to bg
+  	kill(-jobp->pid, SIGCONT); //run the job again
+  	waitfg(jobp->pid); //there can only be one foreground process at a time
+  }
   return;
 }
 
