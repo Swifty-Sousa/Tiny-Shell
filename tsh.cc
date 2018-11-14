@@ -229,7 +229,7 @@ void eval(char *cmdline)
         setpgid(0, 0); // because hint section of lab handout
         if(execve(argv[0],argv,environ)<0)
         {
-          printf("%s Command not found\n", argv[0]);
+          cout<< argv[0]<< " : Commamnd not found"<< endl;
           exit(0); // exit the invalid command
             return;
         }
