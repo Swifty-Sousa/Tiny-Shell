@@ -180,6 +180,22 @@ int main(int argc, char **argv)
 
   exit(0); //control never reaches here
 }
+    
+    
+/*
+void eval(char *cmdline){
+    char *arg[MAXARGS];
+    int bg = parseline(cmdline, argv);
+    if (!builtin_cmd(arg)){
+        if (fork() == 0) {
+            //in child
+            execvp(argv[0], argv);
+            printf("%s; Command not found\n", argv[0]);
+            exit(0);
+        }
+    }
+    return;
+}*/
   
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -228,7 +244,7 @@ void eval(char *cmdline)
         setpgid(0, 0); // because hint section of lab handout
         if(execve(argv[0],argv,environ)<0)
         {
-          cout << "Command not found " << argv[0] << endl;
+          //cout << "Command not found " << argv[0] << endl;
           exit(0); // exit the invalid command
             return;
         }
@@ -291,11 +307,13 @@ int builtin_cmd(char **argv)
     // do the kill all fuciton
     //cout<< "reached killall"<< endl;
     do_killall(argv);
+    return 1;
   }
   if(!strcmp(argv[0], "jobs"))
   {
     //cout<< "reached jobs"<< endl;
     do_show_jobs();
+    return 1;
   }
   return 0;     /* not a builtin command */
 }
@@ -314,9 +332,10 @@ void do_show_jobs(void)
     showjobs(jobs);
 }
 
+//TRACE05
 void showjobs(struct job_t *jobs)
 {
-    cout<< "show jobs not yet implemented"<< endl;
+    listjobs(jobs);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -380,7 +399,7 @@ void waitfg(pid_t pid)
   }
   while(pid==fgpid(jobs))
   {
-    cout<< "pid: "<< pid<< " compared to : "<< fgpid(jobs)<<endl;
+    //cout<< "pid: "<< pid<< " compared to : "<< fgpid(jobs)<<endl;
     sleep(1);
     //wait 1 sec while the process is in the forground
   }
@@ -412,14 +431,18 @@ struct job_t *findprocessid(struct job_t *jobs,pid_t pid)
 //     available zombie children, but doesn't wait for any other
 //     currently running children to terminate.  
 //
+
+//Trace04
 void sigchld_handler(int sig) //we want to wait until child is done executed
 {
-    cout<< "this is a test"<< endl;
+    //cout<< "this is a test"<< endl;
     pid_t pid;
     int status;
     //WNOHANG wait for the child whose process id is equal to the value of pid
     //WUNTRACED the status of child processes under pid that are stopped
-    while ((pid = waitpid(WAIT_ANY, &status, WNOHANG | WUNTRACED)) > 0)
+    // (-1) waits for any child process to end before reaping
+    //TRACE07, Waiting for CHILD PROCESS TO END BEFORE REAPING ESSENTIAL TO TRACE07
+    while ((pid = waitpid(-1, &status, WNOHANG | WUNTRACED)) > 0)
     { //lets child processes end before reapping them
         //WUNTRACED	is for non terminated processes (stopped processes)
 		if(WIFSTOPPED(status)){ // change the state to stopped beacuse status stopped
@@ -446,9 +469,14 @@ void sigchld_handler(int sig) //we want to wait until child is done executed
 //    user types ctrl-c at the keyboard.  Catch it and send it along
 //    to the foreground job.
 //
+//Trace06
 void sigint_handler(int sig) 
 {
-  return;
+    pid_t pid = fgpid(jobs);
+	if (pid > 0){ //if > 0, found a foreground job
+		kill(-pid, sig); //kill the process, SIGINT gets sent to foreground
+	}
+	return;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -459,6 +487,10 @@ void sigint_handler(int sig)
 //
 void sigtstp_handler(int sig) 
 {
+  pid_t pid = fgpid(jobs);
+  if(pid > 0){
+  	kill(-pid, sig); //SIGSTP gets sent to foreground
+  }
   return;
 }
 
