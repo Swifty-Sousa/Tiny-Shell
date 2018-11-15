@@ -58,22 +58,6 @@ void showjobs(struct job_t *jobs);
 struct job_t *findprocessid(struct job_t *jobs,pid_t pid);
 void fgpid(struct job_t jobs);
 
-//
-// You need to implement the functions                                              Complete/Incomplete
-//eval                                                                                    started  
-//builtin_cmd                                                                             COMPLETED
-//do_bgfg
-//do exit                                                                                 Completed
-//do jobs
-
-//showjobs
-//waitfg
-//sigchld_handler
-//sigstp_handler
-//sigint_handler
-//
-//
-// jobs struct
 
 
 // The code below provides the "prototypes" for those functions
@@ -133,6 +117,22 @@ int main(int argc, char **argv)
   Signal(SIGINT,  sigint_handler);   // ctrl-c
   Signal(SIGTSTP, sigtstp_handler);  // ctrl-z
   Signal(SIGCHLD, sigchld_handler);  // Terminated or stopped child
+
+
+/*
+Signal definitions:
+SIGCHLD: Sent to parent process when one of its children stops or is killed
+SIGCONT: This makes any process continue and cannot be blocked
+SIGSTOP: this makes a process stop, can bet handelded, ignored, or blocked
+SIGINT: interrupts a process immediatly, can be handelded ignored or blocked
+SIG_BLOCK: used in sigprocmask to block signals
+SIG_UNBLCK: used in sigprocmask to unblock so the program can recive signals.
+
+
+
+*/
+
+
 
   //
   // This one provides a clean way to kill the shell
@@ -220,10 +220,14 @@ void eval(char *cmdline)
       sigemptyset(&mask);
       sigaddset(&mask, SIGCHLD);
       sigprocmask(SIG_BLOCK, &mask, NULL);
+      /* 
+      these last 3 commands for the race condition of the child
+      being executed before the parent is added to jobs.
+      */
       if((pid=fork())==0)
       {
         //cout<< "this will be a child process"<<endl;
-        // some stuff about the child running the process
+        // the fork() giving a zero indicates a child process
         sigprocmask(SIG_UNBLOCK, &mask, NULL);	// unblock SIGCHLD for child
         setpgid(0, 0); // because hint section of lab handout
         if(execve(argv[0],argv,environ)<0)
@@ -252,7 +256,10 @@ void eval(char *cmdline)
           printf("[%d] (%d) %s", jid, pid, cmdholder);
         }
      }
-
+      /*
+      There is also blocking in each of the foground and backgroudn processes because we do not
+      want to recive singnals as we are adding jobs and editing porcess states.
+      */
   return;
 }
 
@@ -265,8 +272,10 @@ void eval(char *cmdline)
 //
 int builtin_cmd(char **argv) 
 {
-  //string cmd(argv[0]);
-  // im just gonna use string compare because I do no know what this does
+  /*
+  processing all the built in commands and returning that
+  they did something;
+  */
   if(!strcmp(argv[0], "quit"))
   {
       do_exit();
@@ -326,16 +335,20 @@ void do_bgfg(char **argv)
   }
     
   /* Parse the required PID or %JID arg */
-  if (isdigit(argv[1][0])) {
+  if (isdigit(argv[1][0])) 
+  {
     pid_t pid = atoi(argv[1]);
-    if (!(jobp = getjobpid(jobs, pid))) {
+    if (!(jobp = getjobpid(jobs, pid))) 
+    {
       printf("(%d): No such process\n", pid);
       return;
     }
   }
-  else if (argv[1][0] == '%') {
+  else if (argv[1][0] == '%') 
+  {
     int jid = atoi(&argv[1][1]);
-    if (!(jobp = getjobjid(jobs, jid))) {
+    if (!(jobp = getjobjid(jobs, jid))) 
+    {
       printf("%s: No such job\n", argv[1]);
       return;
     }
@@ -356,13 +369,15 @@ void do_bgfg(char **argv)
   //
   string cmd(argv[0]);
   
-  //TRACE09, TRACE10, TRACE11
-  if((strcmp(argv[0],"bg")) == 0)  {
+  //for chainging around forground and backgroudn processes.
+  if((strcmp(argv[0],"bg")) == 0)  
+  {
   	jobp->state = BG; //change state to bg
   	kill(-jobp->pid, SIGCONT); //run the job again
   	printf("[%d] (%d) %s", jobp->jid, jobp->pid, jobp->cmdline);
   }
-  if((strcmp(argv[0],"fg")) == 0)  {
+  if((strcmp(argv[0],"fg")) == 0)  
+  {
   	jobp->state = FG; //change state to bg
   	kill(-jobp->pid, SIGCONT); //run the job again
   	waitfg(jobp->pid); //there can only be one foreground process at a time
@@ -422,27 +437,31 @@ void sigchld_handler(int sig) //we want to wait until child is done executed
     //cout<< "this is a test"<< endl;
     pid_t pid;
     int status;
-    //WNOHANG wait for the child whose process id is equal to the value of pid
+    //WNOHANG wait for the child whose process id is equal to the value of pid 
+    // ie: it checks for zombie children
     //WUNTRACED the status of child processes under pid that are stopped
     // (-1) waits for any child process to end before reaping
-    //TRACE07, Waiting for CHILD PROCESS TO END BEFORE REAPING ESSENTIAL TO TRACE07
+    // Waiting for child process to end before reaping it is essential.
     while ((pid = waitpid(-1, &status, WNOHANG | WUNTRACED)) > 0)
     { //lets child processes end before reapping them
         //WUNTRACED	is for non terminated processes (stopped processes)
-		if(WIFSTOPPED(status)){ // change the state to stopped beacuse status stopped
-            struct job_t *job = getjobpid(jobs, pid);
-  			job->state = ST;
-			printf("Job [%d] (%d) stopped by signal 20\n", job->jid, pid);
-			return;
-		}
-		else if(WIFSIGNALED(status)){ //if ctrl-c
-            struct job_t *job = getjobpid(jobs, pid); 
-			printf("Job [%d] (%d) terminated by signal 2\n", job->jid, pid);
-			deletejob(jobs, pid);
-		}
-		else{		
- 			deletejob(jobs, pid);
- 			}
+		  if(WIFSTOPPED(status))
+      { // change the state to stopped beacuse status stopped
+        struct job_t *job = getjobpid(jobs, pid);
+    		job->state = ST;
+		  	printf("Job [%d] (%d) stopped by signal 20\n", job->jid, pid);
+		  	return;
+		  }
+		  else if(WIFSIGNALED(status))
+      { //if ctrl-c
+        struct job_t *job = getjobpid(jobs, pid); 
+		  	printf("Job [%d] (%d) terminated by signal 2\n", job->jid, pid);
+		  	deletejob(jobs, pid);
+		  }
+		  else
+      {		
+ 		  	deletejob(jobs, pid);
+ 		  }
  		}		
 	return; 
 }
@@ -457,7 +476,8 @@ void sigchld_handler(int sig) //we want to wait until child is done executed
 void sigint_handler(int sig) 
 {
     pid_t pid = fgpid(jobs);
-	if (pid > 0){ //if > 0, found a foreground job
+	if (pid > 0)
+  { //if > 0, found a foreground job
 		kill(-pid, sig); //kill the process, SIGINT gets sent to foreground
 	}
 	return;
